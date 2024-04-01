@@ -1,65 +1,65 @@
-interface UserActivity {
-    userId: string;
-    devices: {
-      deviceId: string;
-      loggedIn: Date;
-      loggedOut?: Date; 
-      lastSeenAt: Date;
-    }[];
-  }
-  
-  type MonthlyStats = {
-    [month: number]: number; 
-  };
-  
-  function calculateMonthlyLoggedInUsers(data: UserActivity[]): MonthlyStats {
-    const monthlyLoggedIn: MonthlyStats = {
-      0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0,
-      6: 0, 7: 0, 8: 0, 9: 0, 10: 0, 11: 0,
-    };
-  
-    for (const user of data) {
-      for (const device of user.devices) {
-        const loginMonth = device.loggedIn.getMonth();
-        const logoutMonth = device.loggedOut?.getMonth() ?? loginMonth; 
-  
-        for (let month = loginMonth; month <= logoutMonth; month++) {
-          monthlyLoggedIn[month]++;
-        }
-      }
+interface User {
+    logged_in: Date;
+    logged_out?: Date;
+    lastSeenAt: Date;
+}
+
+const users: User[] = [
+    {
+        logged_in: new Date('2023-01-05'),
+        logged_out: new Date('2023-01-20'),
+        lastSeenAt: new Date('2023-01-20')
+    },
+    {
+        logged_in: new Date('2023-02-10'),
+        logged_out: new Date('2023-02-15'),
+        lastSeenAt: new Date('2023-02-15')
+    },
+    {
+        logged_in: new Date('2023-03-01'),
+        lastSeenAt: new Date('2023-03-10')
     }
-  
-    return monthlyLoggedIn;
-  }
-  
-  function calculateMonthlyActiveUsers(data: UserActivity[]): MonthlyStats {
-    const monthlyActive: MonthlyStats = {
-      0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0,
-      6: 0, 7: 0, 8: 0, 9: 0, 10: 0, 11: 0,
-    };
-  
-    for (const user of data) {
-      for (const device of user.devices) {
-        const loginMonth = device.loggedIn.getMonth();
-        const lastSeenMonth = device.lastSeenAt.getMonth();
-  
-        // Check activity across months between login and lastSeenAt
-        for (let month = loginMonth; month <= lastSeenMonth; month++) {
-          monthlyActive[month]++;
-        }
-      }
+];
+
+function initializeMonthlyMap(): Map<number, number> {
+    const monthlyMap = new Map<number, number>();
+    for (let i = 1; i <= 12; i++) {
+        monthlyMap.set(i, 0);
     }
-  
-    return monthlyActive;
-  }
-  
-  const sampleData: UserActivity[] = [
-    // ... your user activity data
-  ];
-  
-  const monthlyLoggedInUsers = calculateMonthlyLoggedInUsers(sampleData);
-  const monthlyActiveUsers = calculateMonthlyActiveUsers(sampleData);
-  
-  console.log("Monthly Logged In Users:", monthlyLoggedInUsers);
-  console.log("Monthly Active Users:", monthlyActiveUsers);
-  
+    return monthlyMap;
+}
+
+function updateMonthlyLoggedInUsers(monthlyMap: Map<number, number>, user: User) {
+    const { logged_in, logged_out } = user;
+    const startMonth = logged_in.getMonth() + 1;
+    const endMonth = (logged_out ?? new Date()).getMonth() + 1;
+
+    for (let month = startMonth; month <= endMonth; month++) {
+        monthlyMap.set(month, monthlyMap.get(month)! + 1);
+    }
+}
+
+function updateMonthlyActiveUsers(monthlyMap: Map<number, number>, user: User) {
+    const { logged_in, lastSeenAt } = user;
+    const startMonth = logged_in.getMonth() + 1;
+    const endMonth = lastSeenAt.getMonth() + 1;
+
+    for (let month = startMonth; month <= endMonth; month++) {
+        monthlyMap.set(month, monthlyMap.get(month)! + 1);
+    }
+}
+
+const monthlyLoggedInUsersMap = initializeMonthlyMap();
+for (const user of users) {
+    updateMonthlyLoggedInUsers(monthlyLoggedInUsersMap, user);
+}
+
+const monthlyActiveUsersMap = initializeMonthlyMap();
+for (const user of users) {
+    updateMonthlyActiveUsers(monthlyActiveUsersMap, user);
+}
+
+console.log('Monthly Logged In Users:');
+console.log(Array.from(monthlyLoggedInUsersMap.entries()));
+console.log('\nMonthly Active Users:');
+console.log(Array.from(monthlyActiveUsersMap.entries()));
